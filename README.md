@@ -21,3 +21,4 @@
 -Netlfix GPT
   -Search BAR(Which gives movie suggestions)
   -Movie Suggestions
+  -& more
