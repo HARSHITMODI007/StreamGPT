@@ -1,15 +1,21 @@
 import React, { useState, useRef } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword ,signInWithEmailAndPassword} from "firebase/auth";
 import { auth } from "../Utils/firebase";
-
+import {updateProfile } from "firebase/auth";
 import Header from "./Header";
 import { checkvailddata } from "../Utils/Validate";
+import { addUser } from "../Utils/userSlice";
+import { useDispatch } from "react-redux";
+import { USER_AVATAR } from '../Utils/constants';
 const Login = () => {
   const [isSignInForm, setisSignInForm] = useState(true);
   const [errormessage, seterrormessage] = useState();
   const name = useRef(null);
   const email = useRef(null);
   const password = useRef(null);
+  const dispatch = useDispatch()
+
+
 
   const toggleSignInForm = () => {
     setisSignInForm(!isSignInForm);
@@ -23,19 +29,63 @@ const Login = () => {
 
     if (!isSignInForm) {
       //sinup logic
-      createUserWithEmailAndPassword(auth, email, password)
+      createUserWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      )
         .then((userCredential) => {
           // Signed up
           const user = userCredential.user;
+          updateProfile(user, {
+            displayName: name.current.value, 
+            photoURL:USER_AVATAR
+          }).then(() => {
+            // Profile updated!
+            // then
+            //i will dispatch the action so that it updates the user
+            const {uid,email,displayName,photoURL} = auth.currentUser;
+             dispatch(addUser({
+              uid:uid,
+              email:email,
+              displayName:displayName,
+              photoURL:photoURL,
+            }))
+
+
+          }).catch((error) => {
+            // An error occurred
+            seterrormessage(error.message);
+            // ...
+          });
+          console.log(user);
+         
+
           // ...
         })
         .catch((error) => {
           const errorCode = error.code;
           const errorMessage = error.message;
+          seterrormessage(errorCode + " " + errorMessage);
           // ..
         });
     } else {
       //sign in logic
+      signInWithEmailAndPassword(auth,email.current.value, password.current.value)
+      .then((userCredential) => {
+    // Signed in 
+       const user = userCredential.user;
+       console.log(user)
+
+    // ...
+  })
+  .catch((error) => {
+    const errorCode = error.code;
+    const errorMessage = error.message;
+    seterrormessage(errorCode+" "+errorMessage);
+  });
+
+
     }
 
     console.log(email.current.value);
